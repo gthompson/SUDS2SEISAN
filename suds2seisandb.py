@@ -157,7 +157,7 @@ def insertHYPO71Summary(PUNfile, sfilepath, agency, seisanDBname):
     for newline in newlines:
         fs2.write(newline)
     fs2.close()
-    os.system("move %s %s" % (PUNfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, PUNfile) ) )
+    os.system("move %s %s" % (PUNfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(PUNfile) )) )
     return
 
 def processPHAfile(PHAfile, SFILE, seisanDBname, yyyy):
@@ -175,7 +175,7 @@ def processPHAfile(PHAfile, SFILE, seisanDBname, yyyy):
         if os.path.exists('hypnor.out'):
             print('Running HYPNOR on ' + PHAfile)
             appendPicks('hypnor.out', SFILE)
-            os.system("move %s %s" % (PHAfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, PHAfile) ) )
+            os.system("move %s %s" % (PHAfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(PHAfile)) ) )
             print(' - Success')
         else:
             print(' - Failed')
@@ -207,13 +207,16 @@ for yyyydir in yyyydirs:
     mmdirs = glob.glob(os.path.join(yyyydir,'[0-1][0-9]'))
     for mmdir in mmdirs:
         mm = os.path.basename(mmdir)
-        fptr = open('makerea_wrapper.txt','w')
-        fptr.write(seisanDBname + '\n')
-        fptr.write(yyyy + mm + '\n')
-        fptr.write('\n')
-        fptr.write('BOTH\n')
-        fptr.close()
-        os.system('makerea < makerea_wrapper.txt')
+
+        # make directories if needed
+        if not os.path.exists(os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm)):
+            fptr = open('makerea_wrapper.txt','w')
+            fptr.write(seisanDBname + '\n')
+            fptr.write(yyyy + mm + '\n')
+            fptr.write('\n')
+            fptr.write('BOTH\n')
+            fptr.close()
+            os.system('makerea < makerea_wrapper.txt')
 
         WVMfiles = glob.glob(os.path.join(mmdir, '????????.WVM'))
         print('Found %d WVM files in %s' % (len(WVMfiles), mmdir))
@@ -221,14 +224,14 @@ for yyyydir in yyyydirs:
             SUDSdirbase = WVMfile[0:-4]
             SUDSbasename = os.path.basename(SUDSdirbase)
             MSEEDfile = SUDSdirbase + '.mseed' # produced by recombining SAC file
-            MSEEDdbfile = os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, os.path.basename(MSEEDfile) )
+            MSEEDdbfile = os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(MSEEDfile) )
             #print(MSEEDdbfile + "\n")
             if os.path.exists(MSEEDdbfile):
-                print(MSEEDdbfile + ' already exists. Not processing ' + WVMfile)
+                #print(MSEEDdbfile + ' already exists. Not processing ' + WVMfile)
                 continue
-            #else:
-            #    print(MSEEDdbfile + ' not found. Processing ' + WVMfile)
-            #    #continue
+            else:
+                print(MSEEDdbfile + ' not found. Processing ' + WVMfile)
+                #continue
             DMXfile = SUDSdirbase + '.dmx'
             if os.path.exists(DMXfile):
                 pass
@@ -237,7 +240,7 @@ for yyyydir in yyyydirs:
                 os.system(demux + ' ' + WVMfile)
                 print('Done')
                 if (os.path.exists(DMXfile)):
-                    os.system("move %s %s" % (WVMfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, WVMfile) ) )
+                    os.system("move %s %s" % (WVMfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(WVMfile)) ) )
                 else:
                     print('Demultiplexing seems to have failed as ' + DMXfile + ' not created. Adding to list of bad WVM files.')
                     fbad = open('badWVMfileList.txt','a+')
@@ -256,9 +259,9 @@ for yyyydir in yyyydirs:
             PUNfile = SUDSdirbase + '.PUN' # this might exist if HYPO71 was run and generated a hypocenter
             #yyyy = SUDSdirbase[0:4]
             #mm = SUDSdirbase[5:7]
-            MSEEDdbfile = os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, os.path.basename(MSEEDfile) )
+            MSEEDdbfile = os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(MSEEDfile) )
             if os.path.exists(MSEEDdbfile):
-                print(MSEEDdbfile + ' already exists. Not processing ' + DMXfile)
+                #print(MSEEDdbfile + ' already exists. Not processing ' + DMXfile)
                 continue
             else:
                 print(MSEEDdbfile + ' not found. Processing ' + DMXfile)
@@ -329,7 +332,9 @@ for yyyydir in yyyydirs:
                 os.system('autoreg < autoreg_wrapper.txt')
 
             # That all seemed to work fine, so now move the DMX file
-            os.system("move %s %s" % (DMXfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, DMXfile) ) )
+            os.system("move %s %s" % (DMXfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(DMXfile) ) ) )
+            if os.path.exists(GSEfile):
+                os.system("move %s %s" % (GSEfile, os.path.join(os.environ['SEISAN_TOP'], "WAV", seisanDBname, yyyy, mm, os.path.basename(GSEfile) ) ) )
 
             ## try to guess name of the Sfile that was just created
             #SFILE = findLatestFile(os.path.join(os.environ['SEISAN_TOP'],'REA',seisanDBname,yyyy,mm))
