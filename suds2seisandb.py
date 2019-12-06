@@ -272,7 +272,11 @@ for yyyydir in yyyydirs:
     
             # This produces one file per trace
             print('Converting ' + DMXfile + ' to SAC files')
-            os.system(sud2sac + ' ' + DMXfile)
+            try:
+                os.system(sud2sac + ' ' + DMXfile)
+            except:
+                print('Crashed on converting')
+
             sacfilelist = glob.glob(SACdirbase + '-???')
             if len(sacfilelist) == 0:
                 # DMX file is likely a bad file. Check for WVM file and demultiplex it
@@ -287,8 +291,14 @@ for yyyydir in yyyydirs:
             if len(sacfilelist) > 0:
                 for sacfile in sacfilelist:
                     print('Combining ' + sacfile + ' into Miniseed file ' + MSEEDfile)
-                    tr = op.read(sacfile)
-                    st = st + tr
+                    try:
+                        tr = op.read(sacfile)
+                        st = st + tr
+                    except:
+                        pass
+                if len(st) == 0:
+                    print('No good SAC files')
+                    continue
                 st.write(MSEEDfile)
                 print('Done')
                 #os.remove(SACdirbase + '-???')
@@ -301,17 +311,28 @@ for yyyydir in yyyydirs:
                 # Here we could try copying GSE or MSEED file from newton, since DMX file bad.
                 VDAPnewtonPath = os.path.join('X:','Montserrat','MASTERING', 'VDAP')
                 newtonGSEfile = os.path.join(VDAPnewtonPath, 'GSE', 'gse_all', yyyy, mm, SUDSbasename + '.gse')
-                #newtonMSEEDfile = os.path.join(VDAPnewtonPath, 'GSE', 'gse_all', yyyy, mm, SUDSbasename + '.mseed')
-                #newtonMiniSEEDfile = os.path.join(VDAPnewtonPath, 'GSE', 'gse_all', yyyy, mm, SUDSbasename + '.miniseed')
+                newtonMSEEDfile = os.path.join(VDAPnewtonPath, 'GSE', 'gse_all', yyyy, mm, SUDSbasename + '.mseed')
+                newtonMiniSEEDfile = os.path.join(VDAPnewtonPath, 'GSE', 'gse_all', yyyy, mm, SUDSbasename + '.miniseed')
                 if os.path.exists(newtonGSEfile):
                     os.system('copy ' + newtonGSEfile + ' '  + GSEfile)
-                    st = op.read(newtonGSEfile)
-                    st.write(MSEEDfile)
-                #elif os.path.exists(newtonMSEEDfile):
-                #    os.system('copy ' + newtonMSEEDfile + ' '  + MSEEDfile)
-                #elif os.path.exists(newtonMiniSEEDfile):
-                #    os.system('copy ' + newtonMiniSEEDfile + ' '  + MSEEDfile)
-                #continue
+                    try:
+                        st = op.read(newtonGSEfile)
+                        st.write(MSEEDfile)
+                    except:
+                        fbad = open('badGSEfileList.txt','a+')
+                        fbad.write(newtonGSEfile + '\n')
+                        fbad.close()
+                        if os.path.exists(newtonMSEEDfile):
+                            try:
+                                st = op.read(newtonMSEEDfile)
+                                st.write(MSEEDfile)
+                            except:
+                                if os.path.exists(newtonMiniSEEDfile):
+                                    try:
+                                        st = op.read(newtonMiniSEEDfile)
+                                        st.write(MSEEDfile)
+                                    except:
+                                        pass
 
             if not os.path.exists(MSEEDfile):
                 print('Failed to create a Miniseed file for %s' % MSEEDfile)
