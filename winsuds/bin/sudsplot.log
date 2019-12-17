@@ -1,0 +1,23 @@
+SUDSPLOT Win32 Version 2.82 Log
+
+Command line arguments:
+Processing INI file: sudsutil.ini
+  1 - lsm.sud
+  2 - /m
+
+Session time: 02*102+18:22:43.676
+
+Input SUDS data file: c:\suds\bin\lsm.sud
+No hypocenter data found.
+
+
+Decimation:   Windowing, min & max preserved
+Jump seconds: 0.0
+Plot seconds: All
+Scaling:      Peak magnified to full scale
+Baseline:     10000 samples
+Plot mode:    Display only
+Traces/page:  Best fit
+Plot window:  180.0 seconds about 1st IST.
+
+
